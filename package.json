@@ -14,6 +14,7 @@
     "console.table": "^0.10.0",
     "i": "^0.3.7",
     "inquirer": "^8.2.0",
-    "mysql2": "^2.3.3"
+    "mysql2": "^2.3.3",
+    "sequelizer": "^1.1.4"
   }
 }

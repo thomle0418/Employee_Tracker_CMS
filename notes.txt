@@ -1,0 +1,19 @@
+Pseudo code notes
+
+Required npm dependencies: 
+
+1. mysql2:
+
+2. inquirer.js: 
+
+3. console.table: 
+
+4. Sequelize: 
+
+You’ll need to use the [MySQL2 package](https://www.npmjs.com/package/mysql2) to connect to your MySQL database and perform queries, 
+the [Inquirer package](https://www.npmjs.com/package/inquirer) to interact with the user via the command line, 
+and the [console.table package](https://www.npmjs.com/package/console.table) to print MySQL rows to the console.
+
+1. Set up configuration using sequelize
+2. Set up schema & database with mysql2
+3. 
