@@ -20,7 +20,7 @@ connection.connect(function(err){
 const mainMenu = ()=>{
     inquirer.prompt([
         {
-            name: 'action',
+            name: 'select',
             type: 'list', 
             message: `What would you like to do?`,
             choices: [
@@ -33,7 +33,7 @@ const mainMenu = ()=>{
         }
     ])
     .then((answer)=>{
-        switch(answer.action){
+        switch(answer.select){
             case 'Add data':
                 addMenu();
                 break;
@@ -57,4 +57,35 @@ const mainMenu = ()=>{
                 break;
         }
     });
+};
+
+const addMenu= ()=>{
+    inquirer.prompt([{
+        name: 'add', 
+        type: 'list', 
+        message: 'What would you like to do?', 
+        choices: [
+            'Add an employee', 
+            'Add a role', 
+            'Add a department', 
+            'Return to main menu',
+        ]
+    }
+])
+.then((answer)=>{
+    switch(answer.add){
+        case 'Add an employee':
+            addEmployee();
+            break;
+        case 'Add a role':
+            addRole();
+            break;
+        case 'Add a department':
+            addDepartment();
+            break;
+        default:
+            mainMenu();
+            break;
+    }
+});
 };
