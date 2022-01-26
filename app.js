@@ -1,6 +1,7 @@
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
+const { errorMonitor } = require('mysql2/typings/mysql/lib/Connection');
 
 //Building mySQL connection
 
@@ -13,10 +14,11 @@ const connection= mysql.createConnection({
 });
 
 connection.connect(function(err){
-    if(err) throw;
+    if(err) throw error;
     mainMenu();
 });
 
+//Main Menu prompt
 const mainMenu = ()=>{
     inquirer.prompt([
         {
@@ -59,6 +61,7 @@ const mainMenu = ()=>{
     });
 };
 
+//Add menu prompt
 const addMenu= ()=>{
     inquirer.prompt([{
         name: 'add', 
@@ -88,4 +91,34 @@ const addMenu= ()=>{
             break;
     }
 });
+};
+
+//Add department input 
+
+const addDepartment = ()=>{
+    inquirer.prompt([
+        {
+            name: 'departmentName',
+            type: 'input',
+            message: 'New department name:',
+        }
+    ])
+    .then((answer)=>{
+        let departmentExists= false;
+        connection.query('SELECT name FROM department', (err,res)=>{
+            if(item.name===answer.departmentName.trim()){
+                departmentExists=true;
+            };
+        });
+        if(departmentExists=== true){
+            console.log(`A department named '${answer.departmentName.trim()}' already exists.`);
+            setTimeout(addMenu, 1000);
+        }else{
+            connection.query(`INSERT INTO department(name) VALUES(?)`, [answer.departmentName.trim()], (err,res)=>{
+                if (err) throw err;
+                console.log(`'${answer.departmentName.trim()}' department successfully added to database.`);
+                setTimeout(mainMenu, 1000);
+            });
+            }
+    });
 };
