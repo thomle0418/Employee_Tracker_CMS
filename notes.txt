@@ -3,7 +3,7 @@ Pseudo code notes
 Required npm dependencies: 
 
 1. mysql2:
-
+create the database
 2. inquirer.js: 
 
 3. console.table: 
