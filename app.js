@@ -2,6 +2,7 @@ const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 const { errorMonitor } = require('mysql2/typings/mysql/lib/Connection');
+const res = require('express/lib/response');
 
 //Building mySQL connection
 
@@ -208,3 +209,73 @@ const addRole = ()=>{
         }
     );
 };
+
+//Adds an employee to the database 
+
+const addEmployee =()=>{
+let roles= [];
+let roleTitles = ['No existing roles in database'];
+let employees = [];
+let employeeNames= ['No existing employees in database'];
+
+connection.query(
+    'SELECT * FROM role', (err, result)=>{
+        if(err) return err;
+        if(result.length > 0){
+            if(roleTitles[0]=== 'No existing roles in database'){
+                roleTitles.splice(0, 1);
+            }
+            result.forEach(({id, title, salary, department_id})=>{
+                roles.push({id, title, salary, department_id});
+                rolesTiles.push(title);
+            });
+        }
+        inquirer.prompt([
+        {
+            name: 'employeeFirstName',
+            type: 'input', 
+            message: 'New employee first name:',
+        },
+        { 
+            name: 'employeeLastName',
+            type: 'input', 
+            message: 'New employee last name:',
+        }
+    ])
+    .then((answers)=>{
+        let employeeExists=false;
+        let employeeFirstName = answers.employeeFirstName.trim();
+        let employeeLastName = answers.employeeLastName.trim();
+        let employeeName = `${employeeFirstName} ${employeeLastName}`;
+            
+        connection.query(
+            'SELECT first_name, last_name FROM employee', (err, results)=>{
+                if(err) return err;
+                res.forEach((item)=>{
+                    if(`${item.first_name} ${item.last_name}`=== employeeName){
+                        employeeExists = true;
+                    };
+                });
+                if(employeeExists === true){
+                    inquirer.prompt([
+                        { 
+                            name: 'confirmContinue',
+                            type: 'confirm',
+                            message: 'An employee named ${employeeName} already exists. Do you want to continue?'
+                        }
+                    ])
+                    .then((answers)=>{
+                        if(answers.confirmContinue === false){
+                            addMenu();
+                        }else{
+                            addEmployeeContinue(employees, employeeNames, employeeFirstName, employeeLastName, roleTitles, roles);
+                        };
+                    });
+                }
+            }
+        );
+    });
+    }
+)
+};
+
