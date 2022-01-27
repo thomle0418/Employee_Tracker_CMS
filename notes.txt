@@ -5,10 +5,40 @@ Required npm dependencies:
 1. mysql2:
 create the database
 2. inquirer.js: 
-
+display prompts
 3. console.table: 
+display the table
 
-4. Sequelize: 
+
+What do I need in the menu? 
+
+View all departments
+-Show all department names and id
+
+
+View all Roles
+-Show job title, role id, department, and salary
+
+
+View all employees
+-show employee ids, first name, last name, job titles, department, salaries, and manager
+
+
+add a department
+-prompt to enter name of the department and add to department database
+
+
+add a role 
+-prompt to enter name, salary, and department for the role in the role database
+
+
+add an employee 
+-prompt to enter employees first name, last name, role, and manager in employee database
+
+
+update an employee role 
+-prompt to select an employee to update and their new role and then update in employee database
+
 
 You’ll need to use the [MySQL2 package](https://www.npmjs.com/package/mysql2) to connect to your MySQL database and perform queries, 
 the [Inquirer package](https://www.npmjs.com/package/inquirer) to interact with the user via the command line, 

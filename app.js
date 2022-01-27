@@ -1,10 +1,10 @@
+//Require dependencies 
 const mysql = require('mysql2');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
-const { errorMonitor } = require('mysql2/typings/mysql/lib/Connection');
-const res = require('express/lib/response');
 
-//Building mySQL connection
+
+//Build mySQL connection
 
 const connection= mysql.createConnection({
     host: 'localhost', 
@@ -14,40 +14,91 @@ const connection= mysql.createConnection({
     port: 3306,
 });
 
-connection.connect(function(err){
-    if(err) throw error;
+connection.connect((err)=>{
+    if(err) return err;
     mainMenu();
 });
 
-//Main Menu prompt
+//Main Menu prompt for application
 const mainMenu = ()=>{
+    //inquirer will display the question and options in list format
     inquirer.prompt([
         {
             name: 'select',
             type: 'list', 
             message: `What would you like to do?`,
             choices: [
-                'Add data', 
-                'View data', 
-                'Update data', 
-                'Delete data', 
+                'View all departments', 
+                'View all roles', 
+                'View all employees', 
+                'Add a department', 
+                'Add a role', 
+                'Add an employee', 
+                'Update an employee',
                 'Exit',
             ]
         }
     ])
+    //when the user selects an option, it will switch to the appropriate expression
     .then((answer)=>{
         switch(answer.select){
-            case 'Add data':
-                addMenu();
+            //If selected, query data from departments database and print table to main menu.
+            case 'View all departments':
+                connection.query('SELECT * FROM departments', (err,res)=>{
+                    if (err) return err;
+                    printTables(res);
+                    mainMenu();
+                })
                 break;
-            case 'View data':
-                viewMenu();
+            //If selected, query data from roles database and print table to main menu.    
+            case 'View all roles':
+                connection.query('SELECT * FROM roles', (err,res)=>{
+                    if (err) return err;
+                    printTables(res);
+                    mainMenu();
+                })
                 break;
-            case 'Update data':
-                updateMenu();
+            //If selected, query data from employees database and print table to main menu.    
+            case 'View all employees':
+                connection.query('SELECT * FROM employees', (err,res)=>{
+                    if (err) return err;
+                    printTables(res);
+                    mainMenu();
+                })
                 break;
-            case 'Delete data':
-                deleteMenu();
+            //If selected, display prompt for user to input new department to database
+            case 'Add a department':
+                inquirer.prompt({
+                    name: 'departmentName',
+                    type: 'input',
+                    message: 'New department Name:'
+                })
+                .then((userInput) => {
+                    let departmentExists = false;
+                    //Connect to department database.
+                    connection.query('SELECT name FROM department', (err,res)=>{
+                        if(err) return err;
+                        //Check database for existing department
+                        res.forEach((input)=>{
+                            if (input.name===userInput.departmentName.trim()){
+                                departmentExists = true;
+                            };
+                        });
+                        //If department exists, tell user it already exists and do not add new deparment
+                        if (departmentExists === true){
+                            console.log(`'${userInput.departmentName.trim()} department already exists.`);
+                            setTimeout(mainMenu,1000);
+                        }else{
+                            //If deparment does not exist, add new department to the database and return to the main menu
+                            connection.query('INSERT INTO department (name) VALUES(?)', [userInput.departmentName.trim()], 
+                            (err,res)=>{
+                                if(err) return err;
+                                console.log(`'${userInput.departmentName.trim()}' department successfully added!`);
+                                setTimeout(mainMenu,1000);
+                            })
+                        }
+                    })
+                })
                 break;
             case 'Exit':
                 console.log('Application closed.');
