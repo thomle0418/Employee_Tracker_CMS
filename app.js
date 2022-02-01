@@ -1,5 +1,5 @@
 //Require dependencies 
-const mysql = require('mysql2');
+const mysql = require('mysql');
 const inquirer = require('inquirer');
 const cTable = require('console.table');
 
@@ -19,42 +19,36 @@ connection.connect((err)=>{
     mainMenu();
 });
 
-//Main Menu prompt for application
-const mainMenu = ()=>{
-    //inquirer will display the question and options in list format
-    inquirer.prompt([
-        {
-            name: 'select',
-            type: 'list', 
-            message: `What would you like to do?`,
-            choices: [
-                'View all departments', 
-                'View all roles', 
-                'View all employees', 
-                'Add a department', 
-                'Add a role', 
-                'Add an employee', 
-                'Update an employee',
-                'Exit',
-            ]
-        }
-    ])
-    //when the user selects an option, it will switch to the appropriate expression
+const mainMenu=()=>{
+    inquirer.prompt([{
+        name:'select', 
+        type:'list',
+        choices: [
+            'View all departments',
+            'View all roles', 
+            'View all employees', 
+            'Add a department', 
+            'Add a role', 
+            'Add an employee', 
+            'Update an employee',
+            'Delete an employee',
+            'Exit',
+        ],
+    }])
     .then((answer)=>{
         switch(answer.select){
-            //If selected, query data from departments database and print table to main menu.
             case 'View all departments':
-                connection.query('SELECT * FROM departments', (err,res)=>{
+                connection.query('SELECT * FROM department',(err,res)=>{
                     if (err) return err;
-                    printTables(res);
+                    console.table(res);
                     mainMenu();
-                })
+                });
                 break;
-            //If selected, query data from roles database and print table to main menu.    
+                        //If selected, query data from roles database and print table to main menu.    
             case 'View all roles':
                 connection.query('SELECT * FROM roles', (err,res)=>{
                     if (err) return err;
-                    printTables(res);
+                    console.tables(res);
                     mainMenu();
                 })
                 break;
@@ -62,271 +56,163 @@ const mainMenu = ()=>{
             case 'View all employees':
                 connection.query('SELECT * FROM employees', (err,res)=>{
                     if (err) return err;
-                    printTables(res);
+                    console.tables(res);
                     mainMenu();
                 })
                 break;
-            //If selected, display prompt for user to input new department to database
             case 'Add a department':
-                inquirer.prompt({
-                    name: 'departmentName',
-                    type: 'input',
-                    message: 'New department Name:'
-                })
-                .then((userInput) => {
-                    let departmentExists = false;
-                    //Connect to department database.
-                    connection.query('SELECT name FROM department', (err,res)=>{
-                        if(err) return err;
-                        //Check database for existing department
-                        res.forEach((input)=>{
-                            if (input.name===userInput.departmentName.trim()){
-                                departmentExists = true;
-                            };
-                        });
-                        //If department exists, tell user it already exists and do not add new deparment
-                        if (departmentExists === true){
-                            console.log(`'${userInput.departmentName.trim()} department already exists.`);
-                            setTimeout(mainMenu,1000);
-                        }else{
-                            //If deparment does not exist, add new department to the database and return to the main menu
-                            connection.query('INSERT INTO department (name) VALUES(?)', [userInput.departmentName.trim()], 
-                            (err,res)=>{
-                                if(err) return err;
-                                console.log(`'${userInput.departmentName.trim()}' department successfully added!`);
-                                setTimeout(mainMenu,1000);
-                            })
-                        }
-                    })
-                })
+                addDepartment();
                 break;
+            case 'Add a role':
+                addRole();
+                break;
+            case 'Add an employee':
+                addEmployee();
+                break;
+            case 'Update an employee':
+                updateEmployee();
+                break;
+            case 'Delete an employee':
+                deleteEmployee();
+                break;    
             case 'Exit':
-                console.log('Application closed.');
-                setTimeout(()=>{
-                    connection.end();
-                },1000);
+                connection.end();
                 break;
             default:
-                console.log('Invalid action ');
                 break;
         }
     });
 };
 
-//Add menu prompt
-const addMenu= ()=>{
-    inquirer.prompt([{
-        name: 'add', 
-        type: 'list', 
-        message: 'What would you like to do?', 
-        choices: [
-            'Add an employee', 
-            'Add a role', 
-            'Add a department', 
-            'Return to main menu',
-        ]
-    }
-])
-.then((answer)=>{
-    switch(answer.add){
-        case 'Add an employee':
-            addEmployee();
-            break;
-        case 'Add a role':
-            addRole();
-            break;
-        case 'Add a department':
-            addDepartment();
-            break;
-        default:
-            mainMenu();
-            break;
-    }
-});
-};
-
-//Add department input 
-
-const addDepartment = ()=>{
-    inquirer.prompt([
-        {
-            name: 'departmentName',
-            type: 'input',
-            message: 'New department name:',
-        }
-    ])
-    .then((answer)=>{
-        let departmentExists= false;
-        connection.query('SELECT name FROM department', (err,res)=>{
-            if(item.name===answer.departmentName.trim()){
-                departmentExists=true;
-            };
-        });
-        if(departmentExists=== true){
-            console.log(`A department named '${answer.departmentName.trim()}' already exists.`);
-            setTimeout(addMenu, 1000);
-        }else{
-            connection.query(`INSERT INTO department(name) VALUES(?)`, [answer.departmentName.trim()], (err,res)=>{
-                if (err) throw err;
-                console.log(`'${answer.departmentName.trim()}' department successfully added to database.`);
-                setTimeout(mainMenu, 1000);
-            });
-            }
-    });
-};
-
-const validateNum = function(num){
-    if (/^[0-9]+$/.test(num)){
-        return true;
-    }
-    return 'Invalid input. Only numeric values are accepted'
-};
-
-const addRole = ()=>{
-    let departments =[];
-    let departmentNames = ['No existing departms in database'];
+//Main Menu prompt for application
+// const mainMenu = ()=>{
+//     //inquirer will display the question and options in list format
+//     inquirer.prompt([
+//         {
+//             name: 'select',
+//             type: 'list', 
+//             message: `What would you like to do?`,
+//             choices: [
+//                 'View all departments', 
+//                 'View all roles', 
+//                 'View all employees', 
+//                 'Add a department', 
+//                 'Add a role', 
+//                 'Add an employee', 
+//                 'Update an employee',
+//                 'Exit',
+//             ]
+//         }
+//     ])
+//     //when the user selects an option, it will switch to the appropriate expression
+//     .then((answer)=>{
+//         switch(answer.select){
+//             //If selected, query data from departments database and print table to main menu.
+//             case 'View all departments':
+//                 connection.query('SELECT * FROM departments', (err,res)=>{
+//                     if (err) return err;
+//                     console.tables(res);
+//                     mainMenu();
+//                 });
+//                 break;
+//             //If selected, query data from roles database and print table to main menu.    
+//             case 'View all roles':
+//                 connection.query('SELECT * FROM roles', (err,res)=>{
+//                     if (err) return err;
+//                     console.tables(res);
+//                     mainMenu();
+//                 })
+//                 break;
+//             //If selected, query data from employees database and print table to main menu.    
+//             case 'View all employees':
+//                 connection.query('SELECT * FROM employees', (err,res)=>{
+//                     if (err) return err;
+//                     console.tables(res);
+//                     mainMenu();
+//                 })
+//                 break;
+//             //If selected, display prompt for user to input new department to database
+//             case 'Add a department':
+//                 inquirer.prompt({
+//                     name: 'departmentName',
+//                     type: 'input',
+//                     message: 'New department Name:'
+//                 })
+//                 .then((userInput) => {
+//                     let departmentExists = false;
+//                     //Connect to department database.
+//                     connection.query('SELECT name FROM department', (err,res)=>{
+//                         if(err) return err;
+//                         //Check database for existing department
+//                         res.forEach((input)=>{
+//                             if (input.name===userInput.departmentName.trim()){
+//                                 departmentExists = true;
+//                             };
+//                         });
+//                         //If department exists, tell user it already exists and do not add new deparment
+//                         if (departmentExists === true){
+//                             console.log(`'${userInput.departmentName.trim()} department already exists.`);
+//                             setTimeout(mainMenu,1000);
+//                         }else{
+//                             //If deparment does not exist, add new department to the database and return to the main menu
+//                             connection.query('INSERT INTO department (name) VALUES(?)', [userInput.departmentName.trim()], 
+//                             (err,res)=>{
+//                                 if(err) return err;
+//                                 console.log(`'${userInput.departmentName.trim()}' department successfully added!`);
+//                                 setTimeout(mainMenu,1000);
+//                             })
+//                         }
+//                     })
+//                 })
+//                 break;
+//             case 'Add a role':
+//                 //Needs prompt to enter name, salary, and department for new role
+//                 inquirer.prompt([{
+//                     name:'newRole',
+//                     type: 'input', 
+//                     message: 'What is the new role?',
+//                 }, 
+//                 {
+//                     name: 'newSalary',
+//                     type: 'input', 
+//                     message: 'What is this roles salary?'
+//                 },
+//                 {
+//                     name: 'newDepartment',
+//                     type: 'list', 
+//                     choice: 'departmentNames',
+//                 },
+//             ])
+//             .then((userInput) => {
+//                     let roleExists = false;
+//                     //Connect to roles database.
+//                     connection.query('SELECT name FROM roles', (err,res)=>{
+//                         if(err) return err;
+//                         //Check database for existing department
+//                         res.forEach((input)=>{
+//                             if (input.title===userInput.newRole.trim()){
+//                                 roleExists = true;
+//                             };
+//                         });
+//                         //If role exists, tell user it already exists and do not add new role
+//                         if (roleExists === true){
+//                             console.log(`'${userInput.newRole.trim()} role already exists.`);
+//                             setTimeout(mainMenu,1000);
+//                         }else{
+//                             //If role does not exist, add new role to the database and return to the main menu
+//                             connection.query('INSERT INTO roles (title) VALUES(?)', [userInput.newRole.trim()], 
+//                             (err,res)=>{
+//                                 if(err) return err;
+//                                 console.log(`'${userInput.newRole.trim()}' role successfully added!`);
     
-    connection.query(
-        'SELECT * FROM department', (err,res)=>{
-            if(err) throw err;
-            if(res.length>0){
-                if(departmentNames[0]=== 'No existing departments in database'){
-                    departmentNames.splice(0,1);
-                }
-                res.forEach(({id, name})=>{
-                    departments.push({id, name});
-                    departmentNames.push(`${id} | ${name}`);
-                });
-            }
-            inquire.prompt([
-                {
-                name: 'roleTitle',
-                type: 'input', 
-                message: 'New role title:',
-            }
-        ])
-        .then((answer)=>{
-            let roleExists = false;
-            let roleTitle= answer.roleTitle.trim();
-            connection.query('SELECT title FROM role', (err, res)=>{
-                if(err) throw err;
-                res.forEach((item)=>{ //Prevents user from creating roles with the same title
-                    if(item.title===roleTitle){
-                        roleExists= true;
-                    };
-                });
-                if(roleExists===true){
-                    console.log(`The role titled '${roleTitle}' already exists.`);
-                    setTimeout(addMenu, 1000);
-                }else{
-                    inquirer.prompt([{
-                        name: 'roleSalary', 
-                        type: 'input', 
-                        message: 'New role salary:',
-                        validate: validateNum
-                    },{
-                        name: 'roleDepartment', 
-                        type: 'list', 
-                        message: 'New role department:',
-                        choices: departmentNames
-                    }
-                ])
-                .then((answers)=>{
-                    let departmentId= '';
-                    let splitAnswer= answers.roleDepartment.split(' ');
-                    let departmentName = splitAnswer.splice(2).join(' ').trim(); 
-                    if(answers.roleDepartment === 'No existing departments in database'){
-                        departmentId = null;
-                        departmentName= 'No existing departments in database';
-                    }else{
-                        for (let i = 0; i< departments.length; i++){
-                            if(departments[i].name === departmentName){
-                                departmentId = departments[i].id;
-                            };
-                        };
-                    };
-                    connection.query(
-                        `INSERT INTO role(title, salary, department_id) VALUES (?,?,?)`, [roleTitle, parseInt(answers.roleSalary), departmentId],
-                        (err,res) => {
-                            if(err) throw err;
-                            console.log(`'${roleTitle}' role (${answers.roleSalary}/yr | ${departmentName}) successfully added to database.`);
-                            setTimeout(mainMenu, 1000);
-                        }
-                    );
-                });
-                }
-            });
-        });
-        }
-    );
-};
+//                             });
+//                         };
+//                     });
+//                 });
+//             }
+//         })
+//             .then((userInput) => {
+//                 connection.query()
 
-//Adds an employee to the database 
-
-const addEmployee =()=>{
-let roles= [];
-let roleTitles = ['No existing roles in database'];
-let employees = [];
-let employeeNames= ['No existing employees in database'];
-
-connection.query(
-    'SELECT * FROM role', (err, result)=>{
-        if(err) return err;
-        if(result.length > 0){
-            if(roleTitles[0]=== 'No existing roles in database'){
-                roleTitles.splice(0, 1);
-            }
-            result.forEach(({id, title, salary, department_id})=>{
-                roles.push({id, title, salary, department_id});
-                rolesTiles.push(title);
-            });
-        }
-        inquirer.prompt([
-        {
-            name: 'employeeFirstName',
-            type: 'input', 
-            message: 'New employee first name:',
-        },
-        { 
-            name: 'employeeLastName',
-            type: 'input', 
-            message: 'New employee last name:',
-        }
-    ])
-    .then((answers)=>{
-        let employeeExists=false;
-        let employeeFirstName = answers.employeeFirstName.trim();
-        let employeeLastName = answers.employeeLastName.trim();
-        let employeeName = `${employeeFirstName} ${employeeLastName}`;
-            
-        connection.query(
-            'SELECT first_name, last_name FROM employee', (err, results)=>{
-                if(err) return err;
-                res.forEach((item)=>{
-                    if(`${item.first_name} ${item.last_name}`=== employeeName){
-                        employeeExists = true;
-                    };
-                });
-                if(employeeExists === true){
-                    inquirer.prompt([
-                        { 
-                            name: 'confirmContinue',
-                            type: 'confirm',
-                            message: 'An employee named ${employeeName} already exists. Do you want to continue?'
-                        }
-                    ])
-                    .then((answers)=>{
-                        if(answers.confirmContinue === false){
-                            addMenu();
-                        }else{
-                            addEmployeeContinue(employees, employeeNames, employeeFirstName, employeeLastName, roleTitles, roles);
-                        };
-                    });
-                }
-            }
-        );
-    });
-    }
-)
-};
-
+//             })
+//         };
